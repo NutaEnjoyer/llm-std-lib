@@ -58,5 +58,6 @@ chroma_data/
 # Dev / scratch files
 read_docx.py
 LLM-Standard-Lib-TZ.docx
+LLM-Standard-Lib-Docs.docx
 AsyncResilinceToolkit/
 PLAN.md
