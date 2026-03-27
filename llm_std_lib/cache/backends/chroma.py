@@ -114,7 +114,7 @@ class ChromaBackend(BaseCacheBackend):
             if expires_at and float(expires_at) <= now:
                 continue
             tags = set(json.loads(meta.get("tags", "[]")))
-            emb = np.array(embeddings[i], dtype=np.float32) if embeddings[i] else vector
+            emb = np.array(embeddings[i], dtype=np.float32) if embeddings[i] is not None else vector
             doc = documents[i] if i < len(documents) else None
             entry = CacheEntry(
                 key=doc_id,

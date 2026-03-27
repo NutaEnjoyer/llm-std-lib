@@ -41,7 +41,7 @@ def _percentile(samples: list[float], p: float) -> float:
     return sorted_s[max(0, idx)]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 async def populated_backend():
     """Create a Redis backend pre-loaded with BATCH_SIZE random vectors."""
     _skip_if_no_redis()
