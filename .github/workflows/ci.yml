@@ -89,14 +89,14 @@ jobs:
           --health-retries 5
 
       chromadb:
-        image: chromadb/chroma:latest
+        image: chromadb/chroma:0.5.23
         ports:
           - 8000:8000
         options: >-
-          --health-cmd "curl -f http://localhost:8000/api/v1/heartbeat"
+          --health-cmd "wget -qO- http://localhost:8000/api/v1/heartbeat || exit 1"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 6
+          --health-retries 10
 
     steps:
       - uses: actions/checkout@v4
