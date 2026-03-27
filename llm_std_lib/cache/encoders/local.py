@@ -68,7 +68,7 @@ class LocalEncoder(BaseEncoder):
             ) from exc
         self._model = SentenceTransformer(self._model_name)
         # Determine dimension by encoding an empty string
-        sample = self._model.encode("")
+        sample = self._model.encode("")  # type: ignore[union-attr]
         self._dim = int(sample.shape[0])
 
     def _encode_sync(self, text: str) -> np.ndarray:
