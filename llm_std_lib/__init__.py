@@ -27,7 +27,7 @@ from llm_std_lib.resilience.fallback import FallbackChain
 from llm_std_lib.router.model_router import ModelRouter
 from llm_std_lib.types import LLMResponse, RequestContext, ResponseContext
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __all__ = [
     "LLMClient",
     "LLMConfig",

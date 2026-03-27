@@ -257,7 +257,25 @@ class LLMClient:
 
             _log.debug("LLM request started", prompt_length=len(prompt), model=ctx.model)
 
+            # Check semantic cache before dispatching to provider.
+            cache = self._config.cache
+            if cache is not None:
+                cached_response = await cache.lookup(ctx)
+                if cached_response is not None:
+                    _log.info(
+                        "LLM request served from cache",
+                        model=cached_response.model,
+                        provider=cached_response.provider,
+                        cached=True,
+                    )
+                    return LLMResponse.from_response_context(cached_response)
+
             response_ctx = await self._dispatch(ctx)
+
+            # Store the response in cache for future requests.
+            if cache is not None:
+                await cache.store(ctx, response_ctx)
+
             response = LLMResponse.from_response_context(response_ctx)
 
             _log.info(
