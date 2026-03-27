@@ -1,0 +1,136 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatchling.build.targets.wheel]
+packages = ["llm_std_lib"]
+
+[tool.hatchling.build.targets.sdist]
+include = [
+    "llm_std_lib/",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
+
+[project]
+name = "llm-std-lib"
+version = "1.0.0"
+description = "Python library for standardization, optimization and monitoring of LLM API calls"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "llm-std-lib contributors" },
+]
+keywords = ["llm", "ai", "openai", "anthropic", "cache", "router", "middleware"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.0",
+    "numpy>=1.26",
+    "structlog>=24.0",
+]
+
+[project.optional-dependencies]
+redis = ["redis>=5.0"]
+chroma = ["chromadb>=0.5"]
+qdrant = ["qdrant-client>=1.9"]
+pinecone = ["pinecone-client>=4.0"]
+prometheus = ["prometheus-client>=0.20"]
+otlp = [
+    "opentelemetry-sdk>=1.24",
+    "opentelemetry-exporter-otlp>=1.24",
+]
+local-embeddings = ["sentence-transformers>=3.0"]
+vault = ["hvac>=2.0"]
+encryption = ["cryptography>=42.0"]
+all = [
+    "redis>=5.0",
+    "chromadb>=0.5",
+    "qdrant-client>=1.9",
+    "pinecone-client>=4.0",
+    "prometheus-client>=0.20",
+    "opentelemetry-sdk>=1.24",
+    "opentelemetry-exporter-otlp>=1.24",
+    "sentence-transformers>=3.0",
+    "hvac>=2.0",
+    "cryptography>=42.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/NutaEnjoyer/llm-std-lib"
+Repository = "https://github.com/NutaEnjoyer/llm-std-lib"
+"Bug Tracker" = "https://github.com/NutaEnjoyer/llm-std-lib/issues"
+
+# -- Ruff ----------------------------------------------------------------------
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = []
+
+# -- Black ---------------------------------------------------------------------
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+# -- Mypy ----------------------------------------------------------------------
+
+[tool.mypy]
+strict = true
+python_version = "3.10"
+
+# Optional-dependency modules use type: ignore to handle environments where
+# the packages may or may not be installed. Suppress unused-ignore warnings
+# for these files so the ignores remain stable across environments.
+[[tool.mypy.overrides]]
+module = [
+    "llm_std_lib.metrics.otlp",
+    "llm_std_lib.metrics.prometheus",
+]
+warn_unused_ignores = false
+
+# -- Pytest --------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+asyncio_mode = "auto"
+
+# -- Coverage ------------------------------------------------------------------
+
+[tool.coverage.run]
+source = ["llm_std_lib"]
+omit = [
+    "tests/*",
+    # Future modules — stubs only, will be covered in later versions
+    "llm_std_lib/cache/backends/*.py",
+    "llm_std_lib/cache/encoders/*.py",
+    "llm_std_lib/router/strategies/*.py",
+    "llm_std_lib/router/complexity.py",
+    "llm_std_lib/middleware/stack.py",
+    "llm_std_lib/middleware/builtins/logger.py",
+    "llm_std_lib/middleware/builtins/rate_limiter.py",
+    "llm_std_lib/middleware/builtins/validator.py",
+    # Optional-dep exporters — need prometheus-client / opentelemetry installed
+    "llm_std_lib/metrics/prometheus.py",
+    "llm_std_lib/metrics/otlp.py",
+]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true

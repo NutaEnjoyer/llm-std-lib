@@ -1,0 +1,62 @@
+# Environment / secrets — NEVER commit
+.env
+.env.*
+*.env
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+pip-wheel-metadata/
+wheels/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.lcov
+
+# Mypy / type checkers
+.mypy_cache/
+.dmypy.json
+
+# Ruff / linters
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Docs build
+docs/_build/
+docs/_static/
+docs/_templates/
+
+# ChromaDB local data
+chroma_data/
+
+# Dev / scratch files
+read_docx.py
+LLM-Standard-Lib-TZ.docx
+AsyncResilinceToolkit/
+PLAN.md

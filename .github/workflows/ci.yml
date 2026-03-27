@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main", "develop"]
+
+jobs:
+  lint:
+    name: Lint & type-check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dev dependencies
+        run: pip install ruff mypy hatchling
+
+      - name: Install project (core deps only)
+        run: pip install -e ".[redis,prometheus,otlp,vault,encryption]"
+
+      - name: Ruff lint
+        run: python -m ruff check llm_std_lib
+
+      - name: Mypy
+        run: >
+          python -m mypy llm_std_lib
+          --ignore-missing-imports
+          --no-namespace-packages
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }} / ${{ matrix.os }})
+    needs: lint
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[redis,prometheus,otlp,vault,encryption]" pytest pytest-asyncio pytest-cov
+
+      - name: Run unit tests
+        run: >
+          python -m pytest tests/unit/
+          --cov=llm_std_lib
+          --cov-report=xml
+          --cov-report=term-missing
+          -q
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          fail_ci_if_error: true
+
+  integration:
+    name: Integration tests
+    needs: lint
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+      chromadb:
+        image: chromadb/chroma:latest
+        ports:
+          - 8000:8000
+        options: >-
+          --health-cmd "curl -f http://localhost:8000/api/v1/heartbeat"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 6
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[redis,chroma]" pytest pytest-asyncio
+
+      - name: Run integration tests
+        run: python -m pytest tests/integration/ -q --tb=short
+        env:
+          REDIS_URL: redis://localhost:6379
+          CHROMA_HOST: localhost
+          CHROMA_PORT: "8000"

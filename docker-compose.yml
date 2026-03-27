@@ -1,0 +1,38 @@
+version: "3.9"
+
+# Docker Compose for llm-std-lib integration tests.
+# Starts Redis and ChromaDB so integration tests can run locally.
+#
+# Usage:
+#   docker compose up -d
+#   pytest tests/integration/
+#   docker compose down
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    volumes:
+      - chroma_data:/chroma/chroma
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+volumes:
+  chroma_data:

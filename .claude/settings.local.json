@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest tests/unit/ --tb=short --cov=llm_std_lib --cov-report=term-missing -q)",
+      "Bash(python -c \":*)",
+      "Bash(python -m pytest tests/unit/test_router.py -x -q)",
+      "Bash(python -m pytest --cov=llm_std_lib --cov-fail-under=90 -q)",
+      "Bash(python -m pytest tests/unit/test_resilience.py -x -q --tb=short)",
+      "Bash(python -m pytest tests/unit/test_resilience.py -q --tb=short)",
+      "Bash(python -m pytest tests/unit/test_middleware.py -x -q --tb=short)"
+    ]
+  }
+}
