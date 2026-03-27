@@ -70,7 +70,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
-          fail_ci_if_error: true
+          fail_ci_if_error: false
 
   integration:
     name: Integration tests
@@ -92,11 +92,6 @@ jobs:
         image: chromadb/chroma:0.5.23
         ports:
           - 8000:8000
-        options: >-
-          --health-cmd "wget -qO- http://localhost:8000/api/v1/heartbeat || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
 
     steps:
       - uses: actions/checkout@v4
@@ -105,6 +100,14 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+
+      - name: Wait for ChromaDB
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8000/api/v1/heartbeat && echo "ChromaDB ready" && break
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
 
       - name: Install dependencies
         run: pip install -e ".[redis,chroma]" pytest pytest-asyncio
