@@ -49,7 +49,7 @@ async def populated_backend():
     from llm_std_lib.cache.backends.base import CacheEntry
     from llm_std_lib.cache.backends.redis import RedisBackend
 
-    backend = RedisBackend(url=REDIS_URL, ttl=300)
+    backend = RedisBackend(url=REDIS_URL)
 
     print(f"\nLoading {BATCH_SIZE:,} vectors into Redis (dim={VECTOR_DIM})...")
     t0 = time.monotonic()

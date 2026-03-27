@@ -29,7 +29,7 @@ async def backend():
     _skip_if_no_redis()
     from llm_std_lib.cache.backends.redis import RedisBackend
 
-    b = RedisBackend(url=REDIS_URL, ttl=60)
+    b = RedisBackend(url=REDIS_URL)
     yield b
     await b.clear()
 

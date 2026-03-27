@@ -89,7 +89,7 @@ jobs:
           --health-retries 5
 
       chromadb:
-        image: chromadb/chroma:0.5.23
+        image: chromadb/chroma:latest
         ports:
           - 8000:8000
 
