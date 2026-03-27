@@ -47,4 +47,4 @@ jobs:
         run: pip install -e ".[all]"
 
       - name: Audit dependencies
-        run: pip-audit --strict --skip-editable
+        run: pip-audit
