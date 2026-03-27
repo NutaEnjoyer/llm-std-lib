@@ -15,7 +15,7 @@ include = [
 
 [project]
 name = "llm-std-lib"
-version = "1.0.0"
+version = "1.0.1"
 description = "Python library for standardization, optimization and monitoring of LLM API calls"
 readme = "README.md"
 requires-python = ">=3.10"
