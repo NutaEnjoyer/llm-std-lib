@@ -110,11 +110,12 @@ jobs:
           done
 
       - name: Install dependencies
-        run: pip install -e ".[redis,chroma]" pytest pytest-asyncio
+        run: pip install -e ".[redis,chroma]" pytest pytest-asyncio pytest-timeout
 
       - name: Run integration tests
-        run: python -m pytest tests/integration/ -q --tb=short
+        run: python -m pytest tests/integration/ -q --tb=short --timeout=120
         env:
           REDIS_URL: redis://localhost:6379
           CHROMA_HOST: localhost
           CHROMA_PORT: "8000"
+          PERF_BATCH_SIZE: "1000"

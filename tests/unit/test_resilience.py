@@ -365,8 +365,8 @@ class TestTokenBucketLimiter:
         for _ in range(10):
             await limiter.acquire()
         assert await limiter.acquire() is False
-        # Sleep a tiny bit and refill should happen
-        await asyncio.sleep(0.01)
+        # Sleep long enough for Windows timer resolution (~15ms minimum)
+        await asyncio.sleep(0.05)
         assert await limiter.acquire() is True
 
     async def test_limit_decorator_raises(self) -> None:
