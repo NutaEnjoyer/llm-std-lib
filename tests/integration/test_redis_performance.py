@@ -22,7 +22,7 @@ import pytest
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 BATCH_SIZE = int(os.getenv("PERF_BATCH_SIZE", "100000"))
 VECTOR_DIM = 128
-P95_THRESHOLD_MS = 20.0
+P95_THRESHOLD_MS = float(os.getenv("PERF_P95_THRESHOLD_MS", "20.0"))
 WARMUP_QUERIES = 10
 MEASURE_QUERIES = 200
 

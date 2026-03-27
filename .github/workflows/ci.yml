@@ -119,3 +119,4 @@ jobs:
           CHROMA_HOST: localhost
           CHROMA_PORT: "8000"
           PERF_BATCH_SIZE: "1000"
+          PERF_P95_THRESHOLD_MS: "500"
