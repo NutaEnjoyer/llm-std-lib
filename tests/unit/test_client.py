@@ -223,3 +223,53 @@ class TestLLMClientComplete:
 
         await client.acomplete("Hello", tags={"user_id": "u42", "feature": "chat"})
         assert captured[0].tags == {"user_id": "u42", "feature": "chat"}
+
+    @pytest.mark.asyncio
+    async def test_cache_hit_skips_provider(self, llm_config: LLMConfig) -> None:
+        """When cache returns a hit, provider is never called."""
+        cached_ctx = _fake_response_ctx("cached-id")
+        cached_ctx = cached_ctx.model_copy(update={"cached": True, "text": "Cached!"})
+
+        mock_cache = AsyncMock()
+        mock_cache.lookup = AsyncMock(return_value=cached_ctx)
+        mock_cache.store = AsyncMock()
+
+        config = llm_config.model_copy(update={"cache": mock_cache})
+        client = LLMClient(config)
+
+        provider_called = False
+
+        async def fake_complete(ctx: RequestContext) -> ResponseContext:
+            nonlocal provider_called
+            provider_called = True
+            return _fake_response_ctx(ctx.request_id)
+
+        client._providers["openai"].complete = fake_complete  # type: ignore[method-assign]
+
+        response = await client.acomplete("What is Python?")
+
+        assert response.cached is True
+        assert response.text == "Cached!"
+        assert not provider_called
+        mock_cache.store.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_cache_miss_calls_provider_and_stores(self, llm_config: LLMConfig) -> None:
+        """On cache miss, provider is called and response is stored."""
+        mock_cache = AsyncMock()
+        mock_cache.lookup = AsyncMock(return_value=None)
+        mock_cache.store = AsyncMock()
+
+        config = llm_config.model_copy(update={"cache": mock_cache})
+        client = LLMClient(config)
+
+        async def fake_complete(ctx: RequestContext) -> ResponseContext:
+            return _fake_response_ctx(ctx.request_id)
+
+        client._providers["openai"].complete = fake_complete  # type: ignore[method-assign]
+
+        response = await client.acomplete("What is Python?")
+
+        assert response.text == "Mocked LLM response."
+        mock_cache.lookup.assert_called_once()
+        mock_cache.store.assert_called_once()

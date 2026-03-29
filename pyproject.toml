@@ -135,6 +135,8 @@ omit = [
     # Optional-dep exporters — need prometheus-client / opentelemetry installed
     "llm_std_lib/metrics/prometheus.py",
     "llm_std_lib/metrics/otlp.py",
+    # Optional-dep PII engine — needs presidio installed
+    "llm_std_lib/middleware/builtins/presidio_engine.py",
 ]
 
 [tool.coverage.report]
