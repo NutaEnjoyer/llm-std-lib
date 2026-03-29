@@ -106,6 +106,7 @@ python_version = "3.10"
 module = [
     "llm_std_lib.metrics.otlp",
     "llm_std_lib.metrics.prometheus",
+    "llm_std_lib.middleware.builtins.presidio_engine",
 ]
 warn_unused_ignores = false
 
