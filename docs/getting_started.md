@@ -147,6 +147,38 @@ await collector.post_request(ctx, response_ctx)
 
 Prometheus will scrape `http://localhost:8000/metrics`.
 
+## 8. PII redaction
+
+Встроенный regex-движок закрывает email, телефон, карты, SSN — без доп. зависимостей:
+
+```python
+from llm_std_lib.middleware.builtins.pii import PIIRedactorMiddleware
+from llm_std_lib.types import RequestContext
+
+pii = PIIRedactorMiddleware()
+ctx = RequestContext(prompt="My email is alice@example.com", model="gpt-4o-mini", provider="openai")
+ctx = await pii.pre_request(ctx)
+# → "My email is [EMAIL]"
+```
+
+Для имён и адресов используй Presidio (NER):
+
+```bash
+pip install "llm-std-lib[presidio]"
+
+# Скачай spaCy модели для нужных языков (один раз):
+python -m spacy download en_core_web_lg   # английский (~750MB)
+python -m spacy download ru_core_news_sm  # русский (~15MB)
+```
+
+```python
+from llm_std_lib.middleware.builtins.presidio_engine import PresidioPIIEngine
+
+engine = PresidioPIIEngine(languages=["ru", "en"])
+pii = PIIRedactorMiddleware(engine=engine, language="ru")
+# "Меня зовут Иван Петров" → "Меня зовут <PERSON>"
+```
+
 ## Next steps
 
 - [Configuration Reference](configuration_reference.md) — all options explained

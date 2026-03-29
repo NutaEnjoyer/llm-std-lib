@@ -5,7 +5,16 @@ Scans request prompts (and optionally responses) for personally identifiable
 information and replaces detected entities with placeholder tokens before
 they reach the provider or the caller.
 
-Detected patterns:
+Two engines are available:
+
+* **Regex engine** (default, no extra deps) — fast, covers email, phone,
+  SSN, credit cards, IPv4.
+* **Presidio engine** (optional, NER-based) — covers names, addresses, and
+  20+ entity types via spaCy models.  Install with::
+
+      pip install llm-std-lib[presidio]
+
+Detected patterns (regex engine):
     - ``[EMAIL]``       — e-mail addresses
     - ``[PHONE]``       — US/international phone numbers
     - ``[SSN]``         — US Social Security Numbers (XXX-XX-XXXX)
@@ -16,6 +25,7 @@ Detected patterns:
 from __future__ import annotations
 
 import re
+from typing import Any
 
 from llm_std_lib.middleware.base import BaseMiddleware
 from llm_std_lib.types import RequestContext, ResponseContext
@@ -68,37 +78,62 @@ def _redact(text: str) -> str:
 class PIIRedactorMiddleware(BaseMiddleware):
     """Redacts PII from prompts and optionally from provider responses.
 
+    By default uses a fast regex engine (no extra dependencies). Pass a
+    :class:`~llm_std_lib.middleware.builtins.presidio_engine.PresidioPIIEngine`
+    instance to enable NER-based detection of names, addresses, and 20+ entity
+    types via Microsoft Presidio.
+
     Args:
+        engine: Optional PII engine with a ``redact(text, language) -> str``
+            method. When ``None``, the built-in regex engine is used.
+        language: Language hint forwarded to the engine (e.g. ``"en"``,
+            ``"ru"``). Ignored by the regex engine.
         redact_prompt: Redact ``ctx.prompt`` before sending to the provider.
             Default: ``True``.
         redact_response: Redact ``response.text`` before returning to caller.
-            Default: ``False`` (responses rarely contain raw PII, but can be
-            enabled for extra caution).
+            Default: ``False``.
 
-    Example::
+    Example — regex (default)::
 
-        stack = MiddlewareStack([PIIRedactorMiddleware()])
+        pii = PIIRedactorMiddleware()
         # "My email is alice@example.com" → "My email is [EMAIL]"
+
+    Example — Presidio (NER, names + addresses)::
+
+        from llm_std_lib.middleware.builtins.presidio_engine import PresidioPIIEngine
+
+        engine = PresidioPIIEngine(languages=["en", "ru"])
+        pii = PIIRedactorMiddleware(engine=engine, language="ru")
+        # "Меня зовут Иван Петров" → "Меня зовут <PERSON>"
     """
 
     def __init__(
         self,
+        engine: Any | None = None,
+        language: str = "en",
         redact_prompt: bool = True,
         redact_response: bool = False,
     ) -> None:
+        self._engine = engine
+        self._language = language
         self._redact_prompt = redact_prompt
         self._redact_response = redact_response
 
+    def _do_redact(self, text: str) -> str:
+        if self._engine is not None:
+            return self._engine.redact(text, language=self._language)  # type: ignore[no-any-return]
+        return _redact(text)
+
     async def pre_request(self, ctx: RequestContext) -> RequestContext:
         if self._redact_prompt:
-            ctx.prompt = _redact(ctx.prompt)
+            ctx.prompt = self._do_redact(ctx.prompt)
             if ctx.system_prompt:
-                ctx.system_prompt = _redact(ctx.system_prompt)
+                ctx.system_prompt = self._do_redact(ctx.system_prompt)
         return ctx
 
     async def post_request(
         self, ctx: RequestContext, response: ResponseContext
     ) -> ResponseContext:
         if self._redact_response:
-            response.text = _redact(response.text)
+            response.text = self._do_redact(response.text)
         return response

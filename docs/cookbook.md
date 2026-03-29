@@ -282,7 +282,10 @@ response = await engine.execute(
 
 ---
 
-## 16. PII redaction middleware
+## 16. PII redaction middleware (regex)
+
+Встроенный движок на regex — работает без дополнительных зависимостей.
+Закрывает: email, телефон, номер карты, SSN, IPv4.
 
 ```python
 from llm_std_lib import LLMClient, LLMConfig
@@ -293,12 +296,57 @@ client = LLMClient(LLMConfig.from_env())
 pii = PIIRedactorMiddleware()
 
 ctx = RequestContext(
-    prompt="My email is alice@example.com, summarise this.",
+    prompt="My email is alice@example.com, card 4111-1111-1111-1111",
     model="gpt-4o-mini",
     provider="openai",
 )
-ctx = await pii.pre_request(ctx)   # email is redacted before dispatch
+ctx = await pii.pre_request(ctx)
+# → "My email is [EMAIL], card [CREDIT_CARD]"
 response_ctx = await client._dispatch(ctx)
+```
+
+---
+
+## 17. PII redaction с Presidio (NER — имена, адреса)
+
+Presidio использует spaCy NER-модели — распознаёт имена, адреса и 20+ типов
+сущностей. Модели скачиваются автоматически при первом запуске.
+
+```bash
+pip install "llm-std-lib[presidio]"
+
+# Скачай spaCy модели для нужных языков (один раз):
+python -m spacy download en_core_web_lg   # английский (~750MB)
+python -m spacy download ru_core_news_sm  # русский (~15MB)
+```
+
+```python
+from llm_std_lib.middleware.builtins.pii import PIIRedactorMiddleware
+from llm_std_lib.middleware.builtins.presidio_engine import PresidioPIIEngine
+
+# Укажи языки которые нужны
+engine = PresidioPIIEngine(languages=["ru", "en"])
+
+pii = PIIRedactorMiddleware(engine=engine, language="ru")
+
+ctx = RequestContext(
+    prompt="Меня зовут Иван Петров, мой email ivan@mail.ru",
+    model="gpt-4o-mini",
+    provider="openai",
+)
+ctx = await pii.pre_request(ctx)
+# → "Меня зовут <PERSON>, мой email <EMAIL_ADDRESS>"
+response_ctx = await client._dispatch(ctx)
+```
+
+Можно редактировать и ответ модели:
+
+```python
+pii = PIIRedactorMiddleware(
+    engine=PresidioPIIEngine(languages=["ru", "en"]),
+    language="ru",
+    redact_response=True,  # редактировать и ответ
+)
 ```
 
 ---
